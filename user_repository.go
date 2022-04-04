@@ -56,9 +56,3 @@ func (i *InMemoryUserStorage) Delete(s string) (User, error) {
 		return a, nil
 	}
 }
-
-// Add should return error if user with given key (login) is already
-
-// Update should return error if there is no such user to update
-// Delete should return error if there is no such user to delete
-// Delete should return deleted user

