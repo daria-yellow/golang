@@ -86,16 +86,12 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_4 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_5 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
 
 		defer ts_1.Close()
 		defer ts_2.Close()
 		defer ts_3.Close()
-		defer ts_4.Close()
-		defer ts_5.Close()
 
 		reg1 := map[string]interface{}{
 			"email":         "test1@mail.com",
@@ -123,24 +119,24 @@ func TestAdmin_JWT(t *testing.T) {
 		}
 
 		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg1)))
-		doRequest(http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, reg2)))
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg2)))
 
 		jwtService, err := NewJWTService("pubkey.rsa", "privkey.rsa")
 		admin, _ := u.repository.Get(os.Getenv("CAKE_ADMIN_EMAIL"))
 		token, _ := jwtService.GenearateJWT(admin)
 
-		req1, _ := http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, promoteparams1))
+		req1, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams1))
 		req1.Header.Add("Authorization", "Bearer "+string(token))
 		doRequest(req1, err)
 
 		user, _ := u.repository.Get("test1@mail.com")
 		user_token, _ := jwtService.GenearateJWT(user)
 
-		req2, _ := http.NewRequest(http.MethodPost, ts_4.URL, prepareParams(t, promoteparams2))
+		req2, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams2))
 		req2.Header.Add("Authorization", "Bearer "+string(token))
 		doRequest(req2, err)
 
-		req, _ := http.NewRequest(http.MethodPost, ts_5.URL, prepareParams(t, ban))
+		req, _ := http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, ban))
 		req.Header.Add("Authorization", "Bearer "+string(user_token))
 		resp := doRequest(req, err)
 
@@ -158,16 +154,12 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_4 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_5 := httptest.NewServer(j.jwtAuthAdmin(u.repository, unbanHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, unbanHandler))
 
 		defer ts_1.Close()
 		defer ts_2.Close()
 		defer ts_3.Close()
-		defer ts_4.Close()
-		defer ts_5.Close()
 
 		reg1 := map[string]interface{}{
 			"email":         "test1@mail.com",
@@ -194,24 +186,24 @@ func TestAdmin_JWT(t *testing.T) {
 		}
 
 		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg1)))
-		doRequest(http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, reg2)))
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg2)))
 
 		jwtService, err := NewJWTService("pubkey.rsa", "privkey.rsa")
 		admin, _ := u.repository.Get(os.Getenv("CAKE_ADMIN_EMAIL"))
 		token, _ := jwtService.GenearateJWT(admin)
 
-		req1, _ := http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, promoteparams1))
+		req1, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams1))
 		req1.Header.Add("Authorization", "Bearer "+string(token))
 		doRequest(req1, err)
 
 		user, _ := u.repository.Get("test1@mail.com")
 		user_token, _ := jwtService.GenearateJWT(user)
 
-		req2, _ := http.NewRequest(http.MethodPost, ts_4.URL, prepareParams(t, promoteparams2))
+		req2, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams2))
 		req2.Header.Add("Authorization", "Bearer "+string(token))
 		doRequest(req2, err)
 
-		req, _ := http.NewRequest(http.MethodPost, ts_5.URL, prepareParams(t, unban))
+		req, _ := http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, unban))
 		req.Header.Add("Authorization", "Bearer "+string(user_token))
 		resp := doRequest(req, err)
 
@@ -303,6 +295,73 @@ func TestAdmin_JWT(t *testing.T) {
 		assertBody(t, "User : "+user.Email+"\n"+"Favorite cake : "+user.FavoriteCake+"\n"+"Banned : "+strconv.FormatBool(user.Banned)+"\n"+"Role : "+user.Role+"\n"+"Who banned : "+user.BanHistory.WhoBanned+"\n"+"When : "+user.BanHistory.WhenBanned.String()+"\n"+"Why : "+user.BanHistory.Why+"\n"+"Who unbanned : "+user.BanHistory.WhoUnbanned+"\n", resp)
 	})
 
+	t.Run("admin inspect admin", func(t *testing.T) {
+		u := newTestUserService()
+		Superadmin := User{os.Getenv("CAKE_ADMIN_EMAIL"), os.Getenv("CAKE_ADMIN_PASSWORD"),
+			os.Getenv("CAKE_ADMIN_CAKE"), "superadmin", false, BanHistory{}}
+		u.repository.Add(Superadmin.Email, Superadmin)
+		j, err := NewJWTService("pubkey.rsa", "privkey.rsa")
+		if err != nil {
+			t.FailNow()
+		}
+		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, inspectHandler))
+
+		defer ts_1.Close()
+		defer ts_2.Close()
+		defer ts_3.Close()
+
+		reg1 := map[string]interface{}{
+			"email":         "test1@mail.com",
+			"password":      "somepass",
+			"favorite_cake": "cake",
+		}
+
+		reg2 := map[string]interface{}{
+			"email":         "test2@mail.com",
+			"password":      "somepass",
+			"favorite_cake": "cake",
+		}
+
+		promoteparams1 := map[string]interface{}{
+			"email": "test1@mail.com",
+		}
+
+		promoteparams2 := map[string]interface{}{
+			"email": "test2@mail.com",
+		}
+
+		inspect := map[string]interface{}{
+			"email": "test2@mail.com",
+		}
+
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg1)))
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg2)))
+
+		jwtService, err := NewJWTService("pubkey.rsa", "privkey.rsa")
+		admin, _ := u.repository.Get(os.Getenv("CAKE_ADMIN_EMAIL"))
+		token, _ := jwtService.GenearateJWT(admin)
+
+		req1, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams1))
+		req1.Header.Add("Authorization", "Bearer "+string(token))
+		doRequest(req1, err)
+
+		user, _ := u.repository.Get("test1@mail.com")
+		user_token, _ := jwtService.GenearateJWT(user)
+
+		req2, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams2))
+		req2.Header.Add("Authorization", "Bearer "+string(token))
+		doRequest(req2, err)
+
+		req, _ := http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, inspect))
+		req.Header.Add("Authorization", "Bearer "+string(user_token))
+		resp := doRequest(req, err)
+
+		assertStatus(t, 401, resp)
+		assertBody(t, "Only superadmin can inspect admin!", resp)
+	})
+
 	t.Run("promote user", func(t *testing.T) {
 		u := newTestUserService()
 		Superadmin := User{os.Getenv("CAKE_ADMIN_EMAIL"), os.Getenv("CAKE_ADMIN_PASSWORD"),
@@ -337,6 +396,62 @@ func TestAdmin_JWT(t *testing.T) {
 		resp := doRequest(req, err)
 		assertStatus(t, 201, resp)
 		assertBody(t, "The user have been promoted", resp)
+	})
+
+	t.Run("admin promote user", func(t *testing.T) {
+		u := newTestUserService()
+		Superadmin := User{os.Getenv("CAKE_ADMIN_EMAIL"), os.Getenv("CAKE_ADMIN_PASSWORD"),
+			os.Getenv("CAKE_ADMIN_CAKE"), "superadmin", false, BanHistory{}}
+		u.repository.Add(Superadmin.Email, Superadmin)
+		j, err := NewJWTService("pubkey.rsa", "privkey.rsa")
+		if err != nil {
+			t.FailNow()
+		}
+		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+
+		defer ts_1.Close()
+
+		reg1 := map[string]interface{}{
+			"email":         "test1@mail.com",
+			"password":      "somepass",
+			"favorite_cake": "cake",
+		}
+
+		reg2 := map[string]interface{}{
+			"email":         "test2@mail.com",
+			"password":      "somepass",
+			"favorite_cake": "cake",
+		}
+
+		promoteparams1 := map[string]interface{}{
+			"email": "test1@mail.com",
+		}
+
+		promoteparams2 := map[string]interface{}{
+			"email": "test2@mail.com",
+		}
+
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg1)))
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, reg2)))
+
+		jwtService, err := NewJWTService("pubkey.rsa", "privkey.rsa")
+		admin, _ := u.repository.Get(os.Getenv("CAKE_ADMIN_EMAIL"))
+		token, _ := jwtService.GenearateJWT(admin)
+
+		req1, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams1))
+		req1.Header.Add("Authorization", "Bearer "+string(token))
+		doRequest(req1, err)
+
+		user, _ := u.repository.Get("test1@mail.com")
+		user_token, _ := jwtService.GenearateJWT(user)
+
+		req2, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams2))
+		req2.Header.Add("Authorization", "Bearer "+string(user_token))
+		resp := doRequest(req2, err)
+
+		assertStatus(t, 401, resp)
+		assertBody(t, "Only superadmin can promote!", resp)
 	})
 
 	t.Run("fire user", func(t *testing.T) {
@@ -383,5 +498,69 @@ func TestAdmin_JWT(t *testing.T) {
 		resp := doRequest(req, err)
 		assertStatus(t, 201, resp)
 		assertBody(t, "The user have been fired", resp)
+	})
+
+	t.Run("admin fire user", func(t *testing.T) {
+		u := newTestUserService()
+		Superadmin := User{os.Getenv("CAKE_ADMIN_EMAIL"), os.Getenv("CAKE_ADMIN_PASSWORD"),
+			os.Getenv("CAKE_ADMIN_CAKE"), "superadmin", false, BanHistory{}}
+		u.repository.Add(Superadmin.Email, Superadmin)
+		j, err := NewJWTService("pubkey.rsa", "privkey.rsa")
+		if err != nil {
+			t.FailNow()
+		}
+		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, fireHandler))
+		defer ts_1.Close()
+		defer ts_2.Close()
+		defer ts_3.Close()
+		params_1 := map[string]interface{}{
+			"email":         "test1@mail.com",
+			"password":      "somepass",
+			"favorite_cake": "cake",
+		}
+
+		params_2 := map[string]interface{}{
+			"email":         "test2@mail.com",
+			"password":      "somepass",
+			"favorite_cake": "cake",
+		}
+
+		promoteparams_1 := map[string]interface{}{
+			"email": "test1@mail.com",
+		}
+
+		promoteparams_2 := map[string]interface{}{
+			"email": "test2@mail.com",
+		}
+
+		fireteparams := map[string]interface{}{
+			"email": "test1@mail.com",
+		}
+
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, params_1)))
+		doRequest(http.NewRequest(http.MethodPost, ts_1.URL, prepareParams(t, params_2)))
+
+		jwtService, err := NewJWTService("pubkey.rsa", "privkey.rsa")
+		admin, _ := u.repository.Get(os.Getenv("CAKE_ADMIN_EMAIL"))
+		token, _ := jwtService.GenearateJWT(admin)
+
+		request_1, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams_1))
+		request_1.Header.Add("Authorization", "Bearer "+string(token))
+		doRequest(request_1, err)
+
+		request_2, _ := http.NewRequest(http.MethodPost, ts_2.URL, prepareParams(t, promoteparams_2))
+		request_2.Header.Add("Authorization", "Bearer "+string(token))
+		doRequest(request_2, err)
+
+		user, _ := u.repository.Get("test2@mail.com")
+		user_token, _ := jwtService.GenearateJWT(user)
+
+		req, _ := http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, fireteparams))
+		req.Header.Add("Authorization", "Bearer "+string(user_token))
+		resp := doRequest(req, err)
+		assertStatus(t, 401, resp)
+		assertBody(t, "Only superadmin can fire!", resp)
 	})
 }

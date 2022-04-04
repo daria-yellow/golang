@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/openware/rango/pkg/auth"
@@ -48,7 +49,7 @@ func (u *UserService) JWT(w http.ResponseWriter, r *http.Request, jwtService *JW
 		return
 	}
 
-	if string(passwordDigest) != user.PasswordDigest && user.Email != "admin@gmail.com" {
+	if string(passwordDigest) != user.PasswordDigest && user.Email != os.Getenv("CAKE_ADMIN_EMAIL") {
 		handleError(errors.New("invalid login params"), w)
 		return
 	}

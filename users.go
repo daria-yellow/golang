@@ -71,7 +71,7 @@ func validateRegisterParams(p *UserRegisterParams) error {
 
 	for _, i := range p.FavoriteCake {
 		if !unicode.IsLetter(i) {
-			return errors.New("Enter your cake")
+			return errors.New("Invalid cake: should consist only letters!")
 		}
 	}
 	return nil
@@ -101,7 +101,7 @@ func validateCakeParams(p *ChangeCakeParams) error {
 
 	for _, i := range p.FavoriteCake {
 		if !unicode.IsLetter(i) {
-			return errors.New("Invalid cake")
+			return errors.New("Invalid cake: should consist only letters!")
 		}
 	}
 	return nil

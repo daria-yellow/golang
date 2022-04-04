@@ -134,8 +134,14 @@ func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepos
 		handleError(errors.New("could not read params"), w)
 		return
 	}
+	if u.Role != "superadmin" {
+		w.WriteHeader(401)
+		w.Write([]byte("Only superadmin can promote!"))
+		return
+	}
 	user, err := us.Get(params.Email)
 	if err != nil {
+		w.WriteHeader(401)
 		w.Write([]byte("This user doesn't exist"))
 		return
 	}
@@ -165,12 +171,13 @@ func fireHandler(w http.ResponseWriter, r *http.Request, u User, us UserReposito
 	}
 	user, err := us.Get(params.Email)
 	if err != nil {
+		w.WriteHeader(401)
 		w.Write([]byte("This user doesn't exist"))
 		return
 	}
-	if (user.Role == "admin" || user.Role == "superadmin") && u.Role != "superadmin" {
+	if u.Role != "superadmin" {
 		w.WriteHeader(401)
-		w.Write([]byte("Only superadmin can fire admin!"))
+		w.Write([]byte("Only superadmin can fire!"))
 		return
 	}
 	fire := User{
