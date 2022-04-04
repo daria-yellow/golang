@@ -57,7 +57,11 @@ func (u *UserService) JWT(w http.ResponseWriter, r *http.Request, jwtService *JW
 	if user.Banned == true {
 		w.WriteHeader(401)
 		w.Write([]byte("Your are banned because : "))
-		w.Write([]byte(user.BanHistory.Why))
+		for key, _ := range user.BanHistory.history {
+			if user.BanHistory.history[key].WhoUnbanned == "" {
+				w.Write([]byte(user.BanHistory.history[key].Why))
+			}
+		}
 		return
 	}
 

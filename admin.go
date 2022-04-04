@@ -8,11 +8,21 @@ import (
 	"time"
 )
 
-type BanHistory struct {
+type History struct {
 	WhoBanned   string
 	WhenBanned  time.Time
 	Why         string
 	WhoUnbanned string
+}
+
+type BanHistory struct {
+	history map[int]*History
+}
+
+func NewBanHistory() *BanHistory {
+	return &BanHistory{
+		history: make(map[int]*History),
+	}
 }
 
 type BanParams struct {
@@ -32,17 +42,23 @@ func banHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepositor
 		return
 	}
 	user, err := us.Get(params.Email)
-	if err != nil {
-		w.WriteHeader(401)
-		w.Write([]byte("This user doesn't exist"))
-		return
-	}
 	if (user.Role == "admin" || user.Role == "superadmin") && u.Role != "superadmin" {
 		w.WriteHeader(401)
 		w.Write([]byte("Only superadmin can ban admin!"))
 		return
 	}
-	Banhistory := BanHistory{u.Email, time.Now(), params.Reason, ""}
+	if err != nil {
+		w.WriteHeader(401)
+		w.Write([]byte("This user doesn't exist"))
+		return
+	}
+	if user.Banned == true {
+		w.WriteHeader(401)
+		w.Write([]byte("This user is already banned!"))
+		return
+	}
+	Banhistory := user.BanHistory
+	Banhistory.history[len(Banhistory.history)+1] = &History{u.Email, time.Now(), params.Reason, ""}
 	Ban := User{
 		Email:          user.Email,
 		FavoriteCake:   user.FavoriteCake,
@@ -68,17 +84,28 @@ func unbanHandler(w http.ResponseWriter, r *http.Request, u User, us UserReposit
 		return
 	}
 	user, err := us.Get(params.Email)
-	if err != nil {
-		w.WriteHeader(401)
-		w.Write([]byte("This user doesn't exist"))
-		return
-	}
 	if (user.Role == "admin" || user.Role == "superadmin") && u.Role != "superadmin" {
 		w.WriteHeader(401)
 		w.Write([]byte("Only superadmin can unban admin!"))
 		return
 	}
-	user.BanHistory.WhoUnbanned = u.Email
+	if err != nil {
+		w.WriteHeader(401)
+		w.Write([]byte("This user doesn't exist"))
+		return
+	}
+	if user.Banned == false {
+		w.WriteHeader(401)
+		w.Write([]byte("This user is not banned!"))
+		return
+	}
+
+	for key, _ := range user.BanHistory.history {
+		if user.BanHistory.history[key].WhoUnbanned == "" {
+			user.BanHistory.history[key].WhoUnbanned = u.Email
+		}
+	}
+
 	UnBan := User{
 		Email:          user.Email,
 		FavoriteCake:   user.FavoriteCake,
@@ -121,10 +148,13 @@ func inspectHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepos
 	w.Write([]byte("Favorite cake : " + user.FavoriteCake + "\n"))
 	w.Write([]byte("Banned : " + strconv.FormatBool(user.Banned) + "\n"))
 	w.Write([]byte("Role : " + user.Role + "\n"))
-	w.Write([]byte("Who banned : " + user.BanHistory.WhoBanned + "\n"))
-	w.Write([]byte("When : " + user.BanHistory.WhenBanned.String() + "\n"))
-	w.Write([]byte("Why : " + user.BanHistory.Why + "\n"))
-	w.Write([]byte("Who unbanned : " + user.BanHistory.WhoUnbanned + "\n"))
+	for key, _ := range user.BanHistory.history {
+		w.Write([]byte("History : " + strconv.Itoa(key) + "\n"))
+		w.Write([]byte("Who banned : " + user.BanHistory.history[key].WhoBanned + "\n"))
+		w.Write([]byte("When : " + user.BanHistory.history[key].WhenBanned.String() + "\n"))
+		w.Write([]byte("Why : " + user.BanHistory.history[key].Why + "\n"))
+		w.Write([]byte("Who unbanned : " + user.BanHistory.history[key].WhoUnbanned + "\n"))
+	}
 }
 
 func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {

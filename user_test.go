@@ -591,6 +591,10 @@ func TestUsers_JWT(t *testing.T) {
 
 		resp := doRequest(http.NewRequest(http.MethodPost, ts_3.URL, prepareParams(t, params)))
 		assertStatus(t, 401, resp)
-		assertBody(t, "Your are banned because : "+user.BanHistory.Why, resp)
+		for key, _ := range user.BanHistory.history {
+			if user.BanHistory.history[key].WhoUnbanned == "" {
+				assertBody(t, "Your are banned because : "+user.BanHistory.history[key].Why, resp)
+			}
+		}
 	})
 }

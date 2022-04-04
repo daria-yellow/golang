@@ -125,6 +125,7 @@ func (u *UserService) Register(w http.ResponseWriter, r *http.Request) {
 		Email:          params.Email,
 		PasswordDigest: string(passwordDigest),
 		FavoriteCake:   params.FavoriteCake,
+		BanHistory:     *NewBanHistory(),
 	}
 	err = u.repository.Add(params.Email, newUser)
 
@@ -154,13 +155,6 @@ func changeCakeHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 	if params.Email != u.Email {
 		w.WriteHeader(401)
 		w.Write([]byte("Your are not logged in"))
-		return
-	}
-
-	if u.Banned == true {
-		w.WriteHeader(401)
-		w.Write([]byte("Your are banned because : "))
-		w.Write([]byte(u.BanHistory.Why))
 		return
 	}
 
@@ -200,13 +194,6 @@ func changePassHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 		return
 	}
 
-	if u.Banned == true {
-		w.WriteHeader(401)
-		w.Write([]byte("Your are banned because : "))
-		w.Write([]byte(u.BanHistory.Why))
-		return
-	}
-
 	passwordDigest := md5.New().Sum([]byte(params.Password))
 	newPass := User{
 		Email:          u.Email,
@@ -241,13 +228,6 @@ func changeEmailHandler(w http.ResponseWriter, r *http.Request, u User, us UserR
 	if params.Email != u.Email {
 		w.WriteHeader(401)
 		w.Write([]byte("Your are not logged in"))
-		return
-	}
-
-	if u.Banned == true {
-		w.WriteHeader(401)
-		w.Write([]byte("Your are banned because : "))
-		w.Write([]byte(u.BanHistory.Why))
 		return
 	}
 

@@ -8,6 +8,18 @@ import (
 	"testing"
 )
 
+func history(us User) string {
+	s := ""
+	for key, _ := range us.BanHistory.history {
+		s = s + "History : " + strconv.Itoa(key) + "\n"
+		s = s + "Who banned : " + us.BanHistory.history[key].WhoBanned + "\n"
+		s = s + "When : " + us.BanHistory.history[key].WhenBanned.String() + "\n"
+		s = s + "Why : " + us.BanHistory.history[key].Why + "\n"
+		s = s + "Who unbanned : " + us.BanHistory.history[key].WhoUnbanned + "\n"
+	}
+	return s
+}
+
 func TestAdmin_JWT(t *testing.T) {
 	doRequest := createRequester(t)
 	t.Run("ban user", func(t *testing.T) {
@@ -45,7 +57,11 @@ func TestAdmin_JWT(t *testing.T) {
 		resp := doRequest(req, err)
 		user, _ := u.repository.Get("test@mail.com")
 		assertStatus(t, 201, resp)
-		assertBody(t, "The user have been banned bacause: "+user.BanHistory.Why, resp)
+		for key, _ := range user.BanHistory.history {
+			if user.BanHistory.history[key].WhoUnbanned == "" {
+				assertBody(t, "The user have been banned bacause: "+user.BanHistory.history[key].Why, resp)
+			}
+		}
 	})
 
 	t.Run("ban unexisted user", func(t *testing.T) {
@@ -292,7 +308,7 @@ func TestAdmin_JWT(t *testing.T) {
 		resp := doRequest(req, err)
 		user, _ := u.repository.Get("test@mail.com")
 		assertStatus(t, 200, resp)
-		assertBody(t, "User : "+user.Email+"\n"+"Favorite cake : "+user.FavoriteCake+"\n"+"Banned : "+strconv.FormatBool(user.Banned)+"\n"+"Role : "+user.Role+"\n"+"Who banned : "+user.BanHistory.WhoBanned+"\n"+"When : "+user.BanHistory.WhenBanned.String()+"\n"+"Why : "+user.BanHistory.Why+"\n"+"Who unbanned : "+user.BanHistory.WhoUnbanned+"\n", resp)
+		assertBody(t, "User : "+user.Email+"\n"+"Favorite cake : "+user.FavoriteCake+"\n"+"Banned : "+strconv.FormatBool(user.Banned)+"\n"+"Role : "+user.Role+"\n"+history(user), resp)
 	})
 
 	t.Run("admin inspect admin", func(t *testing.T) {
