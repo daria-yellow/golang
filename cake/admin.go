@@ -34,14 +34,14 @@ type UnBanParams struct {
 	Email string `json:"email"`
 }
 
-func banHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func banHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &BanParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 	if err != nil {
 		handleError(errors.New("could not read params"), w)
 		return
 	}
-	user, err := us.Get(params.Email)
+	user, err := us.repository.Get(params.Email)
 	if (user.Role == "admin" || user.Role == "superadmin") && u.Role != "superadmin" {
 		w.WriteHeader(401)
 		w.Write([]byte("Only superadmin can ban admin!"))
@@ -67,7 +67,7 @@ func banHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepositor
 		Banned:         true,
 		BanHistory:     Banhistory,
 	}
-	err = us.Update(user.Email, Ban)
+	err = us.repository.Update(user.Email, Ban)
 	if err != nil {
 		handleError(err, w)
 		return
@@ -76,14 +76,14 @@ func banHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepositor
 	w.Write([]byte("The user have been banned bacause: " + params.Reason))
 }
 
-func unbanHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func unbanHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &UnBanParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 	if err != nil {
 		handleError(errors.New("could not read params"), w)
 		return
 	}
-	user, err := us.Get(params.Email)
+	user, err := us.repository.Get(params.Email)
 	if (user.Role == "admin" || user.Role == "superadmin") && u.Role != "superadmin" {
 		w.WriteHeader(401)
 		w.Write([]byte("Only superadmin can unban admin!"))
@@ -114,7 +114,7 @@ func unbanHandler(w http.ResponseWriter, r *http.Request, u User, us UserReposit
 		Banned:         false,
 		BanHistory:     user.BanHistory,
 	}
-	err = us.Update(user.Email, UnBan)
+	err = us.repository.Update(user.Email, UnBan)
 	if err != nil {
 		handleError(err, w)
 		return
@@ -123,14 +123,14 @@ func unbanHandler(w http.ResponseWriter, r *http.Request, u User, us UserReposit
 	w.Write([]byte("The user have been unbanned"))
 }
 
-func inspectHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func inspectHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &UnBanParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 	if err != nil {
 		handleError(errors.New("could not read params"), w)
 		return
 	}
-	user, err := us.Get(params.Email)
+	user, err := us.repository.Get(params.Email)
 	if err != nil {
 		w.WriteHeader(401)
 		w.Write([]byte("This user doesn't exist"))
@@ -157,7 +157,7 @@ func inspectHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepos
 	}
 }
 
-func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &UnBanParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 	if err != nil {
@@ -169,7 +169,7 @@ func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepos
 		w.Write([]byte("Only superadmin can promote!"))
 		return
 	}
-	user, err := us.Get(params.Email)
+	user, err := us.repository.Get(params.Email)
 	if err != nil {
 		w.WriteHeader(401)
 		w.Write([]byte("This user doesn't exist"))
@@ -183,7 +183,7 @@ func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepos
 		Banned:         user.Banned,
 		BanHistory:     user.BanHistory,
 	}
-	err = us.Update(user.Email, promote)
+	err = us.repository.Update(user.Email, promote)
 	if err != nil {
 		handleError(err, w)
 		return
@@ -192,14 +192,14 @@ func promoteHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepos
 	w.Write([]byte("The user have been promoted"))
 }
 
-func fireHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func fireHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &UnBanParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 	if err != nil {
 		handleError(errors.New("could not read params"), w)
 		return
 	}
-	user, err := us.Get(params.Email)
+	user, err := us.repository.Get(params.Email)
 	if err != nil {
 		w.WriteHeader(401)
 		w.Write([]byte("This user doesn't exist"))
@@ -218,7 +218,7 @@ func fireHandler(w http.ResponseWriter, r *http.Request, u User, us UserReposito
 		Banned:         user.Banned,
 		BanHistory:     user.BanHistory,
 	}
-	err = us.Update(user.Email, fire)
+	err = us.repository.Update(user.Email, fire)
 	if err != nil {
 		handleError(err, w)
 		return

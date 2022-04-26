@@ -27,6 +27,7 @@ type UserRepository interface {
 
 type UserService struct {
 	repository UserRepository
+	sender     chan []byte
 }
 
 type UserRegisterParams struct {
@@ -134,11 +135,12 @@ func (u *UserService) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u.sender <- []byte("You have been registered")
+
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("registered"))
 }
 
-func changeCakeHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func changeCakeHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &ChangeCakeParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 
@@ -154,7 +156,7 @@ func changeCakeHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 
 	if params.Email != u.Email {
 		w.WriteHeader(401)
-		w.Write([]byte("Your are not logged in"))
+		us.sender <- []byte("Your are not logged in")
 		return
 	}
 
@@ -163,7 +165,7 @@ func changeCakeHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 		FavoriteCake:   params.FavoriteCake,
 		PasswordDigest: u.PasswordDigest,
 	}
-	err = us.Update(u.Email, newCake)
+	err = us.repository.Update(u.Email, newCake)
 
 	if err != nil {
 		handleError(err, w)
@@ -171,10 +173,10 @@ func changeCakeHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Your favorite cake have been changed"))
+	us.sender <- []byte("Your favorite cake have been changed")
 }
 
-func changePassHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func changePassHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &ChangePassParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 
@@ -190,7 +192,7 @@ func changePassHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 
 	if params.Email != u.Email {
 		w.WriteHeader(401)
-		w.Write([]byte("Your are not logged in"))
+		us.sender <- []byte("Your are not logged in")
 		return
 	}
 
@@ -200,7 +202,7 @@ func changePassHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 		FavoriteCake:   u.FavoriteCake,
 		PasswordDigest: string(passwordDigest),
 	}
-	err = us.Update(u.Email, newPass)
+	err = us.repository.Update(u.Email, newPass)
 
 	if err != nil {
 		handleError(err, w)
@@ -208,10 +210,10 @@ func changePassHandler(w http.ResponseWriter, r *http.Request, u User, us UserRe
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Your password have been changed"))
+	us.sender <- []byte("Your password have been changed")
 }
 
-func changeEmailHandler(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func changeEmailHandler(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	params := &ChangeEmailParams{}
 	err := json.NewDecoder(r.Body).Decode(params)
 
@@ -227,7 +229,7 @@ func changeEmailHandler(w http.ResponseWriter, r *http.Request, u User, us UserR
 
 	if params.Email != u.Email {
 		w.WriteHeader(401)
-		w.Write([]byte("Your are not logged in"))
+		us.sender <- []byte("Your are not logged in")
 		return
 	}
 
@@ -236,8 +238,8 @@ func changeEmailHandler(w http.ResponseWriter, r *http.Request, u User, us UserR
 		FavoriteCake:   u.FavoriteCake,
 		PasswordDigest: u.PasswordDigest,
 	}
-	us.Delete(u.Email)
-	err = us.Add(params.New_email, newEmail)
+	us.repository.Delete(u.Email)
+	err = us.repository.Add(params.New_email, newEmail)
 
 	if err != nil {
 		handleError(err, w)
@@ -245,7 +247,7 @@ func changeEmailHandler(w http.ResponseWriter, r *http.Request, u User, us UserR
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Your email have been changed"))
+	us.sender <- []byte("Your email have been changed")
 }
 
 func handleError(err error, w http.ResponseWriter) {

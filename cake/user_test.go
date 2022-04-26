@@ -258,7 +258,7 @@ func TestUsers_JWT(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		ts := httptest.NewServer(j.jwtAuth(u.repository, getMyData))
+		ts := httptest.NewServer(j.jwtAuth(*u, getMyData))
 		defer ts.Close()
 		params := map[string]interface{}{
 			"email":    "test@mail.com",
@@ -276,7 +276,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, getMyData))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, getMyData))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params := map[string]interface{}{
@@ -305,7 +305,7 @@ func TestUsers_JWT(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		ts := httptest.NewServer(j.jwtAuth(u.repository, changeCakeHandler))
+		ts := httptest.NewServer(j.jwtAuth(*u, changeCakeHandler))
 		defer ts.Close()
 		params := map[string]interface{}{
 			"email":         "test@mail.com",
@@ -323,7 +323,7 @@ func TestUsers_JWT(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		ts := httptest.NewServer(j.jwtAuth(u.repository, changePassHandler))
+		ts := httptest.NewServer(j.jwtAuth(*u, changePassHandler))
 		defer ts.Close()
 		params := map[string]interface{}{
 			"email":    "test@mail.com",
@@ -340,7 +340,7 @@ func TestUsers_JWT(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		ts := httptest.NewServer(j.jwtAuth(u.repository, changeEmailHandler))
+		ts := httptest.NewServer(j.jwtAuth(*u, changeEmailHandler))
 		defer ts.Close()
 		params := map[string]interface{}{
 			"email":    "test@mail.com",
@@ -358,7 +358,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, changeCakeHandler))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, changeCakeHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params_1 := map[string]interface{}{
@@ -390,7 +390,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, changeCakeHandler))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, changeCakeHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params_1 := map[string]interface{}{
@@ -424,7 +424,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, changePassHandler))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, changePassHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params_1 := map[string]interface{}{
@@ -457,7 +457,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, changePassHandler))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, changePassHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params_1 := map[string]interface{}{
@@ -491,7 +491,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, changeEmailHandler))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, changeEmailHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params_1 := map[string]interface{}{
@@ -525,7 +525,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuth(u.repository, changeEmailHandler))
+		ts_2 := httptest.NewServer(j.jwtAuth(*u, changeEmailHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params_1 := map[string]interface{}{
@@ -562,7 +562,7 @@ func TestUsers_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, banHandler))
 		ts_3 := httptest.NewServer(http.HandlerFunc(wrapJwt(j, u.JWT)))
 		defer ts_1.Close()
 		defer ts_2.Close()

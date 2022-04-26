@@ -32,7 +32,7 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, banHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params := map[string]interface{}{
@@ -73,7 +73,7 @@ func TestAdmin_JWT(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		ts_1 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
+		ts_1 := httptest.NewServer(j.jwtAuthAdmin(*u, banHandler))
 		defer ts_1.Close()
 
 		banparams := map[string]interface{}{
@@ -102,8 +102,8 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(*u, banHandler))
 
 		defer ts_1.Close()
 		defer ts_2.Close()
@@ -170,8 +170,8 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, unbanHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(*u, unbanHandler))
 
 		defer ts_1.Close()
 		defer ts_2.Close()
@@ -237,8 +237,8 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, banHandler))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, unbanHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, banHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(*u, unbanHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		defer ts_3.Close()
@@ -284,7 +284,7 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, inspectHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, inspectHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params := map[string]interface{}{
@@ -321,8 +321,8 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, inspectHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(*u, inspectHandler))
 
 		defer ts_1.Close()
 		defer ts_2.Close()
@@ -388,7 +388,7 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		params := map[string]interface{}{
@@ -424,7 +424,7 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
 
 		defer ts_1.Close()
 
@@ -480,8 +480,8 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, fireHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(*u, fireHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		defer ts_3.Close()
@@ -526,8 +526,8 @@ func TestAdmin_JWT(t *testing.T) {
 			t.FailNow()
 		}
 		ts_1 := httptest.NewServer(http.HandlerFunc(u.Register))
-		ts_2 := httptest.NewServer(j.jwtAuthAdmin(u.repository, promoteHandler))
-		ts_3 := httptest.NewServer(j.jwtAuthAdmin(u.repository, fireHandler))
+		ts_2 := httptest.NewServer(j.jwtAuthAdmin(*u, promoteHandler))
+		ts_3 := httptest.NewServer(j.jwtAuthAdmin(*u, fireHandler))
 		defer ts_1.Close()
 		defer ts_2.Close()
 		defer ts_3.Close()

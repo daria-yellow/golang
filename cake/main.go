@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func getMyData(w http.ResponseWriter, r *http.Request, u User, us UserRepository) {
+func getMyData(w http.ResponseWriter, r *http.Request, u User, us UserService) {
 	w.Write([]byte(u.Email))
 	w.Write([]byte("\n"))
 	w.Write([]byte(u.FavoriteCake))
@@ -37,19 +37,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	r.HandleFunc("/user/me", logRequest(jwtService.jwtAuth(users, getMyData))).Methods(http.MethodGet)
-	r.HandleFunc("/user/favorite_cake", logRequest(jwtService.jwtAuth(users, changeCakeHandler))).Methods(http.MethodPut)
-	r.HandleFunc("/user/email", logRequest(jwtService.jwtAuth(users, changeEmailHandler))).Methods(http.MethodPut)
-	r.HandleFunc("/user/password", logRequest(jwtService.jwtAuth(users, changePassHandler))).Methods(http.MethodPut)
+
+	go sender(userService.sender)
+
+	r.HandleFunc("/user/me", logRequest(jwtService.jwtAuth(userService, getMyData))).Methods(http.MethodGet)
+	r.HandleFunc("/user/favorite_cake", logRequest(jwtService.jwtAuth(userService, changeCakeHandler))).Methods(http.MethodPut)
+	r.HandleFunc("/user/email", logRequest(jwtService.jwtAuth(userService, changeEmailHandler))).Methods(http.MethodPut)
+	r.HandleFunc("/user/password", logRequest(jwtService.jwtAuth(userService, changePassHandler))).Methods(http.MethodPut)
 	r.HandleFunc("/user/register", logRequest(userService.Register)).Methods(http.MethodPost)
 	r.HandleFunc("/user/jwt", logRequest(wrapJwt(jwtService, userService.JWT))).Methods(http.MethodPost)
 
-	r.HandleFunc("/admin/ban", logRequest(jwtService.jwtAuthAdmin(users, banHandler))).Methods(http.MethodPost)
-	r.HandleFunc("/admin/unban", logRequest(jwtService.jwtAuthAdmin(users, unbanHandler))).Methods(http.MethodPost)
-	r.HandleFunc("/admin/inspect", logRequest(jwtService.jwtAuthAdmin(users, inspectHandler))).Methods(http.MethodGet)
+	r.HandleFunc("/admin/ban", logRequest(jwtService.jwtAuthAdmin(userService, banHandler))).Methods(http.MethodPost)
+	r.HandleFunc("/admin/unban", logRequest(jwtService.jwtAuthAdmin(userService, unbanHandler))).Methods(http.MethodPost)
+	r.HandleFunc("/admin/inspect", logRequest(jwtService.jwtAuthAdmin(userService, inspectHandler))).Methods(http.MethodGet)
 
-	r.HandleFunc("/admin/fire", logRequest(jwtService.jwtAuthSuperadmin(users, fireHandler))).Methods(http.MethodPost)
-	r.HandleFunc("/admin/promote", logRequest(jwtService.jwtAuthSuperadmin(users, promoteHandler))).Methods(http.MethodPost)
+	r.HandleFunc("/admin/fire", logRequest(jwtService.jwtAuthSuperadmin(userService, fireHandler))).Methods(http.MethodPost)
+	r.HandleFunc("/admin/promote", logRequest(jwtService.jwtAuthSuperadmin(userService, promoteHandler))).Methods(http.MethodPost)
 
 	srv := http.Server{
 		Addr:    ":8080",

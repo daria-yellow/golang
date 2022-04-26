@@ -56,7 +56,7 @@ func (u *UserService) JWT(w http.ResponseWriter, r *http.Request, jwtService *JW
 
 	if user.Banned == true {
 		w.WriteHeader(401)
-		w.Write([]byte("Your are banned because : "))
+		u.sender <- []byte("Your are banned because : ")
 		for key, _ := range user.BanHistory.history {
 			if user.BanHistory.history[key].WhoUnbanned == "" {
 				w.Write([]byte(user.BanHistory.history[key].Why))
@@ -74,10 +74,10 @@ func (u *UserService) JWT(w http.ResponseWriter, r *http.Request, jwtService *JW
 	w.Write([]byte(token))
 }
 
-type ProtectedHandler func(rw http.ResponseWriter, r *http.Request, u User, us UserRepository)
+type ProtectedHandler func(rw http.ResponseWriter, r *http.Request, u User, us UserService)
 
 func (j *JWTService) jwtAuth(
-	users UserRepository,
+	users UserService,
 	h ProtectedHandler,
 ) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -86,13 +86,13 @@ func (j *JWTService) jwtAuth(
 		auth, err := j.ParseJWT(token)
 		if err != nil {
 			rw.WriteHeader(401)
-			rw.Write([]byte("unauthorized"))
+			users.sender <- []byte("unauthorized")
 			return
 		}
-		user, err := users.Get(auth.Email)
+		user, err := users.repository.Get(auth.Email)
 		if err != nil {
 			rw.WriteHeader(401)
-			rw.Write([]byte("unauthorized"))
+			users.sender <- []byte("unauthorized")
 			return
 		}
 		h(rw, r, user, users)
@@ -100,7 +100,7 @@ func (j *JWTService) jwtAuth(
 }
 
 func (j *JWTService) jwtAuthAdmin(
-	users UserRepository,
+	users UserService,
 	h ProtectedHandler,
 ) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -109,18 +109,18 @@ func (j *JWTService) jwtAuthAdmin(
 		auth, err := j.ParseJWT(token)
 		if err != nil {
 			rw.WriteHeader(401)
-			rw.Write([]byte("unauthorized"))
+			users.sender <- []byte("unauthorized")
 			return
 		}
-		user, err := users.Get(auth.Email)
+		user, err := users.repository.Get(auth.Email)
 		if err != nil {
 			rw.WriteHeader(401)
-			rw.Write([]byte("unauthorized"))
+			users.sender <- []byte("unauthorized")
 			return
 		}
 		if user.Role != "superadmin" && user.Role != "admin" {
 			rw.WriteHeader(401)
-			rw.Write([]byte("You should be admin to access this page"))
+			users.sender <- []byte("You should be admin to access this page")
 			return
 		}
 		h(rw, r, user, users)
@@ -128,7 +128,7 @@ func (j *JWTService) jwtAuthAdmin(
 }
 
 func (j *JWTService) jwtAuthSuperadmin(
-	users UserRepository,
+	users UserService,
 	h ProtectedHandler,
 ) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -137,18 +137,18 @@ func (j *JWTService) jwtAuthSuperadmin(
 		auth, err := j.ParseJWT(token)
 		if err != nil {
 			rw.WriteHeader(401)
-			rw.Write([]byte("unauthorized"))
+			users.sender <- []byte("unauthorized")
 			return
 		}
-		user, err := users.Get(auth.Email)
+		user, err := users.repository.Get(auth.Email)
 		if err != nil {
 			rw.WriteHeader(401)
-			rw.Write([]byte("unauthorized"))
+			users.sender <- []byte("unauthorized")
 			return
 		}
 		if user.Role != "superadmin" {
 			rw.WriteHeader(401)
-			rw.Write([]byte("You should be a superadmin to access this page"))
+			users.sender <- []byte("You should be a superadmin to access this page")
 			return
 		}
 		h(rw, r, user, users)
